@@ -1,5 +1,5 @@
 #pragma once
-
+#include <immintrin.h>
 #include <iostream>
 #include <vector>
 #include "vec4.h"

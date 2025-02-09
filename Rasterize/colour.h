@@ -99,9 +99,10 @@ public:
     // Returns a new `colour` object with added components.
     colour operator + (const colour& _c) {
         colour c;
-        c.r = r + _c.r;
-        c.g = g + _c.g;
-        c.b = b + _c.b;
+        __m128 a = _mm_loadu_ps(rgb);    // 加载当前颜色的 RGB 分量到 SIMD 寄存器
+        __m128 b = _mm_loadu_ps(_c.rgb); // 加载传入颜色的 RGB 分量到 SIMD 寄存器
+        __m128 result = _mm_add_ps(a, b); // SIMD 并行加法
+        _mm_storeu_ps(c.rgb, result);    // 将结果存回 c.rgb
         return c;
     }
 };
