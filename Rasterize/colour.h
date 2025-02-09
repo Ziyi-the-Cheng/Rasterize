@@ -70,6 +70,7 @@ public:
     // - scalar: The scaling factor
     // Returns a new `colour` object with scaled components.
     colour operator * (const float scalar) {
+#ifdef SIMD
         colour c;
         __m128 vec = _mm_set_ps(0, b, g, r);          // 加载 r, g, b 到 SIMD 寄存器
         vec = _mm_mul_ps(vec, _mm_set1_ps(scalar));   // 并行乘以标量
@@ -79,6 +80,13 @@ public:
         c.g = tmp[1];
         c.b = tmp[2];
         return c;
+#else
+        colour c;
+        c.r = r * scalar;
+        c.g = g * scalar;
+        c.b = b * scalar;
+        return c;
+#endif
     }
 
     // Multiplies the RGB components of this colour with another colour.
@@ -98,11 +106,19 @@ public:
     // - _c: The other colour to add
     // Returns a new `colour` object with added components.
     colour operator + (const colour& _c) {
+#ifdef SIMD
         colour c;
         __m128 a = _mm_loadu_ps(rgb);    // 加载当前颜色的 RGB 分量到 SIMD 寄存器
         __m128 b = _mm_loadu_ps(_c.rgb); // 加载传入颜色的 RGB 分量到 SIMD 寄存器
         __m128 result = _mm_add_ps(a, b); // SIMD 并行加法
         _mm_storeu_ps(c.rgb, result);    // 将结果存回 c.rgb
         return c;
+#else
+        colour c;
+        c.r = r + _c.r;
+        c.g = g + _c.g;
+        c.b = b + _c.b;
+        return c;
+#endif
     }
 };
