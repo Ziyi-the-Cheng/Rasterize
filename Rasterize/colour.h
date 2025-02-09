@@ -1,5 +1,5 @@
 #pragma once
-
+#include <xmmintrin.h>
 #include <cmath>
 #include <cstdint>
 
@@ -30,7 +30,7 @@ public:
     // - _r: Red component
     // - _g: Green component
     // - _b: Blue component
-    void set(float _r, float _g, float _b) { r = _r, g = _g, b = _b; }
+    inline void set(float _r, float _g, float _b) { r = _r, g = _g, b = _b; }
 
     // Accesses the specified component of the colour by index.
     // Input Variables:
@@ -71,9 +71,13 @@ public:
     // Returns a new `colour` object with scaled components.
     colour operator * (const float scalar) {
         colour c;
-        c.r = r * scalar;
-        c.g = g * scalar;
-        c.b = b * scalar;
+        __m128 vec = _mm_set_ps(0, b, g, r);          // 加载 r, g, b 到 SIMD 寄存器
+        vec = _mm_mul_ps(vec, _mm_set1_ps(scalar));   // 并行乘以标量
+        float tmp[4];
+        _mm_storeu_ps(tmp, vec);
+        c.r = tmp[0];
+        c.g = tmp[1];
+        c.b = tmp[2];
         return c;
     }
 
