@@ -16,7 +16,7 @@
 #include "light.h"
 #include "triangle.h"
 
-#define Unroll
+#define Unroll //apply unrolling
 
 // Main rendering function that processes a mesh, transforms its vertices, applies lighting, and draws triangles on the canvas.
 // Input Variables:
@@ -59,82 +59,6 @@ void render(Renderer& renderer, Mesh* mesh, matrix& camera, Light& L) {
         tri.draw(renderer, L, mesh->ka, mesh->kd);
     }
 }
-
-void nrender(Renderer& renderer, Mesh* mesh, matrix& camera, Light& L) {
-    // Combine perspective, camera, and world transformations for the mesh
-    matrix p = renderer.perspective * camera * mesh->world;
-    int canvasWidth = renderer.canvas.getWidth();
-    int canvasHeight = renderer.canvas.getHeight();
-
-    // precompute transformed normals
-    std::vector<vec4> transformedNormals(mesh->vertices.size());
-    for (size_t i = 0; i < mesh->vertices.size(); i++) {
-        transformedNormals[i] = mesh->world * mesh->vertices[i].normal;
-        transformedNormals[i].normalise();
-    }
-
-    // Iterate through all triangles in the mesh
-    for (triIndices& ind : mesh->triangles) {
-        Vertex t[3]; // Temporary array to store transformed triangle vertices
-
-        // Transform each vertex of the triangle
-        for (unsigned int i = 0; i < 3; i++) {
-            vec4 transformedVertex = p * mesh->vertices[ind.v[i]].p;
-            transformedVertex.divideW();
-
-            // Store transformed vertex
-            t[i].p = transformedVertex;
-
-            // Use precomputed normal
-            t[i].normal = transformedNormals[ind.v[i]];
-
-            // Map to screen space
-            t[i].p[0] = (transformedVertex[0] + 1.f) * 0.5f * canvasWidth;
-            t[i].p[1] = canvasHeight - ((transformedVertex[1] + 1.f) * 0.5f * canvasHeight);  // Invert Y-axis
-
-            // Copy vertex colors
-            t[i].rgb = mesh->vertices[ind.v[i]].rgb;
-        }
-
-        // Clip triangles with Z-values outside [-1, 1]
-        if (fabs(t[0].p[2]) > 1.0f || fabs(t[1].p[2]) > 1.0f || fabs(t[2].p[2]) > 1.0f)
-            continue;
-
-        // screen space clipping
-        float minX = (t[0].p[0] < t[1].p[0])
-            ? ((t[0].p[0] < t[2].p[0]) ? t[0].p[0] : t[2].p[0])
-            : ((t[1].p[0] < t[2].p[0]) ? t[1].p[0] : t[2].p[0]);
-
-        float maxX = (t[0].p[0] > t[1].p[0])
-            ? ((t[0].p[0] > t[2].p[0]) ? t[0].p[0] : t[2].p[0])
-            : ((t[1].p[0] > t[2].p[0]) ? t[1].p[0] : t[2].p[0]);
-
-        float minY = (t[0].p[1] < t[1].p[1])
-            ? ((t[0].p[1] < t[2].p[1]) ? t[0].p[1] : t[2].p[1])
-            : ((t[1].p[1] < t[2].p[1]) ? t[1].p[1] : t[2].p[1]);
-
-        float maxY = (t[0].p[1] > t[1].p[1])
-            ? ((t[0].p[1] > t[2].p[1]) ? t[0].p[1] : t[2].p[1])
-            : ((t[1].p[1] > t[2].p[1]) ? t[1].p[1] : t[2].p[1]);
-
-
-        // cull triangles completely outside the screen
-        if (maxX < 0 || minX > canvasWidth || maxY < 0 || minY > canvasHeight)
-            continue;
-
-        // backface culling
-        vec2D edge1(t[1].p[0] - t[0].p[0], t[1].p[1] - t[0].p[1]);
-        vec2D edge2(t[2].p[0] - t[0].p[0], t[2].p[1] - t[0].p[1]);
-        float crossZ = edge1.x * edge2.y - edge1.y * edge2.x;
-        if (crossZ < 0)
-            continue;
-
-        // Create a triangle object and render it
-        triangle tri(t[0], t[1], t[2]);
-        tri.draw(renderer, L, mesh->ka, mesh->kd);
-    }
-}
-
 
 
 // Test scene function to demonstrate rendering with user-controlled transformations
