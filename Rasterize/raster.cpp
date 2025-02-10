@@ -17,13 +17,14 @@
 #include "triangle.h"
 
 #define Unroll
+
 // Main rendering function that processes a mesh, transforms its vertices, applies lighting, and draws triangles on the canvas.
 // Input Variables:
 // - renderer: The Renderer object used for drawing.
 // - mesh: Pointer to the Mesh object containing vertices and triangles to render.
 // - camera: Matrix representing the camera's transformation.
 // - L: Light object representing the lighting parameters.
-void nrender(Renderer& renderer, Mesh* mesh, matrix& camera, Light& L) {
+void render(Renderer& renderer, Mesh* mesh, matrix& camera, Light& L) {
     // Combine perspective, camera, and world transformations for the mesh
     matrix p = renderer.perspective * camera * mesh->world;
 
@@ -59,7 +60,7 @@ void nrender(Renderer& renderer, Mesh* mesh, matrix& camera, Light& L) {
     }
 }
 
-void render(Renderer& renderer, Mesh* mesh, matrix& camera, Light& L) {
+void nrender(Renderer& renderer, Mesh* mesh, matrix& camera, Light& L) {
     // Combine perspective, camera, and world transformations for the mesh
     matrix p = renderer.perspective * camera * mesh->world;
     int canvasWidth = renderer.canvas.getWidth();
@@ -314,6 +315,38 @@ void scene2() {
 
     RandomNumberGenerator& rng = RandomNumberGenerator::getInstance();
 
+    Mesh Cube = Mesh::makeCube(1.f);
+
+
+#ifdef Unroll
+    for (unsigned int x = 0; x < 8; x+=2) {
+        for (unsigned int y = 0; y < 6; y+=2) {
+            Mesh* m = new Mesh(Cube);
+            scene.push_back(m);
+            m->world = matrix::makeTranslation(-7.0f + (static_cast<float>(x) * 2.f), 5.0f - (static_cast<float>(y) * 2.f), -8.f);
+            rRot r{ rng.getRandomFloat(-.1f, .1f), rng.getRandomFloat(-.1f, .1f), rng.getRandomFloat(-.1f, .1f) };
+            rotations.push_back(r);
+
+            m = new Mesh(Cube);
+            scene.push_back(m);
+            m->world = matrix::makeTranslation(-7.0f + (static_cast<float>(x + 1) * 2.f), 5.0f - (static_cast<float>(y) * 2.f), -8.f);
+            rRot r1{ rng.getRandomFloat(-.1f, .1f), rng.getRandomFloat(-.1f, .1f), rng.getRandomFloat(-.1f, .1f) };
+            rotations.push_back(r1);
+
+            m = new Mesh(Cube);
+            scene.push_back(m);
+            m->world = matrix::makeTranslation(-7.0f + (static_cast<float>(x) * 2.f), 5.0f - (static_cast<float>(y + 1) * 2.f), -8.f);
+            rRot r2{ rng.getRandomFloat(-.1f, .1f), rng.getRandomFloat(-.1f, .1f), rng.getRandomFloat(-.1f, .1f) };
+            rotations.push_back(r2);
+
+            m = new Mesh(Cube);
+            scene.push_back(m);
+            m->world = matrix::makeTranslation(-7.0f + (static_cast<float>(x + 1) * 2.f), 5.0f - (static_cast<float>(y + 1) * 2.f), -8.f);
+            rRot r3{ rng.getRandomFloat(-.1f, .1f), rng.getRandomFloat(-.1f, .1f), rng.getRandomFloat(-.1f, .1f) };
+            rotations.push_back(r3);
+        }
+    }
+#else
     // Create a grid of cubes with random rotations
     for (unsigned int y = 0; y < 6; y++) {
         for (unsigned int x = 0; x < 8; x++) {
@@ -326,6 +359,7 @@ void scene2() {
         }
     }
 
+#endif
     // Create a sphere and add it to the scene
     Mesh* sphere = new Mesh();
     *sphere = Mesh::makeSphere(1.0f, 10, 20);
@@ -375,8 +409,8 @@ void scene2() {
 int main() {
 
     // Uncomment the desired scene function to run
-    scene1();
-    //scene2();
+    //scene1();
+    scene2();
     //sceneTest(); 
     
 
