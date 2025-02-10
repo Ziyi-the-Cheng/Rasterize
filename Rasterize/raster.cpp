@@ -5,7 +5,7 @@
 #include "GamesEngineeringBase.h" // Include the GamesEngineeringBase header
 #include <algorithm>
 #include <chrono>
-
+#include <thread>
 #include <cmath>
 #include "matrix.h"
 #include "colour.h"
@@ -60,6 +60,24 @@ void render(Renderer& renderer, Mesh* mesh, matrix& camera, Light& L) {
     }
 }
 
+void renderScene(Renderer& renderer, std::vector<Mesh*>& scene, matrix& camera, Light& L) {
+    const size_t nThreads = 11;
+
+    std::vector<std::thread> threads;
+    threads.reserve(nThreads);
+
+    for (size_t i = 0; i < nThreads; ++i) {
+        threads.emplace_back([i, nThreads, &renderer, &scene, &camera, &L]() {
+            for (size_t j = i; j < scene.size(); j += nThreads) {
+                render(renderer, scene[j], camera, L);
+            }
+            });
+    }
+
+    for (auto& t : threads) {
+        t.detach();
+    }
+}
 
 // Test scene function to demonstrate rendering with user-controlled transformations
 // No input variables
@@ -218,6 +236,8 @@ void scene1() {
 
         for (auto& m : scene)
             render(renderer, m, camera, L);
+
+        //renderScene(renderer, scene, camera, L);
         renderer.present();
     }
 
@@ -333,8 +353,8 @@ void scene2() {
 int main() {
 
     // Uncomment the desired scene function to run
-    //scene1();
-    scene2();
+    scene1();
+    //scene2();
     //sceneTest(); 
     
 
