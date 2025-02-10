@@ -60,7 +60,7 @@ void render(Renderer& renderer, Mesh* mesh, matrix& camera, Light& L) {
     }
 }
 
-void renderScene(Renderer& renderer, std::vector<Mesh*>& scene, matrix& camera, Light& L) {
+void MultithreadRender(Renderer& renderer, std::vector<Mesh*>& scene, matrix& camera, Light& L) {
     const size_t nThreads = 11;
 
     std::vector<std::thread> threads;
