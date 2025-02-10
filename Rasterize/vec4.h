@@ -5,6 +5,7 @@
 // The `vec4` class represents a 4D vector and provides operations such as scaling, addition, subtraction, 
 // normalization, and vector products (dot and cross).
 class vec4 {
+public:
     union {
         struct {
             float x, y, z, w; // Components of the vector
@@ -12,7 +13,6 @@ class vec4 {
         float v[4];           // Array representation of the vector components
     };
 
-public:
     // Constructor to initialize the vector with specified values.
     // Default values: x = 0, y = 0, z = 0, w = 1.
     // Input Variables:

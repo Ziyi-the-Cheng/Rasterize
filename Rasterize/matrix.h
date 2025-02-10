@@ -3,7 +3,7 @@
 #include <iostream>
 #include <vector>
 #include "vec4.h"
-
+#define SIMD
 // Matrix class for 4x4 transformation matrices
 class matrix {
     union {
@@ -18,7 +18,7 @@ public:
     }
 
     // Access matrix elements by row and column
-    float& operator()(unsigned int row, unsigned int col) { return m[row][col]; }
+    inline float& operator()(unsigned int row, unsigned int col) { return m[row][col]; }
 
     // Display the matrix elements in a readable format
     void display() {
@@ -34,12 +34,24 @@ public:
     // - v: vec4 object to multiply with the matrix
     // Returns the resulting transformed vec4
     vec4 operator * (const vec4& v) const {
+#ifdef SIMD
+        vec4 result;
+        __m128 vec = _mm_loadu_ps(v.v);   // 加载向量 v 到 SIMD 寄存器
+
+        for (int i = 0; i < 4; ++i) {
+            __m128 row = _mm_loadu_ps(&a[i * 4]);  // 加载矩阵的一行到 SIMD 寄存器
+            __m128 mul = _mm_mul_ps(row, vec);     // 元素级乘法
+            result[i] = _mm_cvtss_f32(_mm_hadd_ps(_mm_hadd_ps(mul, mul), mul));  // 水平加法求和
+        }
+        return result;
+#else
         vec4 result;
         result[0] = a[0] * v[0] + a[1] * v[1] + a[2] * v[2] + a[3] * v[3];
         result[1] = a[4] * v[0] + a[5] * v[1] + a[6] * v[2] + a[7] * v[3];
         result[2] = a[8] * v[0] + a[9] * v[1] + a[10] * v[2] + a[11] * v[3];
         result[3] = a[12] * v[0] + a[13] * v[1] + a[14] * v[2] + a[15] * v[3];
         return result;
+#endif
     }
 
     // Multiply the matrix by another matrix
@@ -47,6 +59,18 @@ public:
     // - mx: Another matrix to multiply with
     // Returns the resulting matrix
     matrix operator * (const matrix& mx) const {
+#ifdef SIMD
+        matrix ret;
+        for (int row = 0; row < 4; ++row) {
+            __m128 row_vec = _mm_loadu_ps(&a[row * 4]);  // 加载当前矩阵的一行
+            for (int col = 0; col < 4; ++col) {
+                __m128 col_vec = _mm_set_ps(mx.a[12 + col], mx.a[8 + col], mx.a[4 + col], mx.a[0 + col]);  // 加载另一矩阵的一列
+                __m128 mul = _mm_mul_ps(row_vec, col_vec);  // 并行乘法
+                ret.a[row * 4 + col] = _mm_cvtss_f32(_mm_hadd_ps(_mm_hadd_ps(mul, mul), mul));  // 水平加法求和
+            }
+        }
+        return ret;
+#else
         matrix ret;
         for (int row = 0; row < 4; ++row) {
             for (int col = 0; col < 4; ++col) {
@@ -58,6 +82,7 @@ public:
             }
         }
         return ret;
+#endif
     }
 
     // Create a perspective projection matrix
