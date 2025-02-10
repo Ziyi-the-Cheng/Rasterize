@@ -52,6 +52,7 @@ public:
         ka = kd = 0.75f;
     }
 
+
     // Add a vertex and its normal to the mesh
     // Input Variables:
     // - vertex: Position of the vertex

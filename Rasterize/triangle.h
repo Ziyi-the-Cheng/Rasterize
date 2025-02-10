@@ -91,6 +91,7 @@ public:
         return (a1 * alpha) + (a2 * beta) + (a3 * gamma);
     }
 
+
     // Draw the triangle on the canvas
     // Input Variables:
     // - renderer: Renderer object for drawing
@@ -105,9 +106,11 @@ public:
         // Skip very small triangles
         if (area < 1.f) return;
 
-        // Iterate over the bounding box and check each pixel
-        for (int y = (int)(minV.y); y < (int)ceil(maxV.y); y++) {
-            for (int x = (int)(minV.x); x < (int)ceil(maxV.x); x++) {
+        L.omega_i.normalise();
+
+        // Iterate over the bounding box and check each pixel in row-major order
+        for (int x = (int)(minV.x); x < (int)ceil(maxV.x); x++) {
+            for (int y = (int)(minV.y); y < (int)ceil(maxV.y); y++) {
                 float alpha, beta, gamma;
 
                 // Check if the pixel lies inside the triangle
@@ -122,7 +125,6 @@ public:
                     // Perform Z-buffer test and apply shading
                     if (renderer.zbuffer(x, y) > depth && depth > 0.01f) {
                         // typical shader begin
-                        L.omega_i.normalise();
                         float dot = max(vec4::dot(L.omega_i, normal), 0.0f);
                         colour a = (c * kd) * (L.L * dot + (L.ambient * kd));
                         // typical shader end
